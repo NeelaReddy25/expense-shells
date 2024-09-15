@@ -8,6 +8,8 @@ R="\e[31m"
 G="\e[32m"
 Y="\e[33m"
 N="\e[0m"
+echo "Please enter DB password:"
+read -s mysql_root_password
 
 VALIDATE(){
     if [ $1 -ne 0 ]
@@ -45,36 +47,36 @@ else
     echo -e "Expense user already created...$Y SKIPPING $N"
 fi
 
-# mkdir /app
+mkdir -p /app &>>$LOGFILE
+VALIDATE $? "Creating app directory"
 
+curl -o /tmp/backend.zip https://expense-builds.s3.us-east-1.amazonaws.com/expense-backend-v2.zip &>>$LOGFILE
+VALIDATE $? "Downloading backend code"
 
-# curl -o /tmp/backend.zip https://expense-builds.s3.us-east-1.amazonaws.com/expense-backend-v2.zip
+cd /app
+unzip /tmp/backend.zip &>>$LOGFILE
+VALIDATE $? "Extracted backend code"
 
+npm install &>>$LOGFILE
+VALIDATE $? "Installing nodejs dependencies"
 
-# cd /app
+cp /home/ec2-user/expense-shells/backend.service /etc/systemd/system/backend.service &>>$LOGFILE
+VALIDATE $? "Copied backend.service"
 
+systemctl daemon-reload &>>$LOGFILE
+VALIDATE $? "Daemon Reload"
 
-# unzip /tmp/backend.zip
+systemctl start backend &>>$LOGFILE
+VALIDATE $? "Starting backend"
 
+systemctl enable backend
+VALIDATE $? "Enabling backend"
 
-# npm install
+dnf install mysql -y
+VALIDATE $? "Installing MySQL Client"
 
+mysql -h db.neelareddy.store -uroot -p${mysql_root_password} < /app/schema/backend.sql
+VALIDATE $? "Schema loading"
 
-# systemctl daemon-reload
-
-
-# systemctl start backend
-
-
-# systemctl enable backend
-
-
-# dnf install mysql -y
-
-
-# mysql -h db.neelareddy.store -uroot -p${mysql_root_password} < /app/schema/backend.sql
-
-
-# systemctl restart backend
-
-
+systemctl restart backend
+VALIDATE $? "Restarting backend"
