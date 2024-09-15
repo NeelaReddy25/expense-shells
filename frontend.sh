@@ -39,7 +39,10 @@ VALIDATE $? "Starting nginx"
 rm -rf /usr/share/nginx/html/* &>>$LOGFILE
 VALIDATE $? "Removing existing content"
 
-cd /usr/share/nginx/html
+curl -o /tmp/frontend.zip https://expense-builds.s3.us-east-1.amazonaws.com/expense-frontend-v2.zip &>>$LOGFILE
+VALIDATE $? "Downloading frontend code"
+
+cd /usr/share/nginx/html &>>$LOGFILE
 unzip /tmp/frontend.zip &>>$LOGFILE
 VALIDATE $? "Extracting frontend code"
 
